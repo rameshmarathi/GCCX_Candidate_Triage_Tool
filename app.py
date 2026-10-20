@@ -285,6 +285,17 @@ def update_candidate(candidate_id):
     })
 
 
+@app.post("/api/reset")
+def reset_candidates_db():
+    """Reset candidate shortlists, recruiter tags, and AI summaries to initial mock state."""
+    with get_db() as db:
+        db.execute("UPDATE candidates SET shortlisted = 0, tags_json = '[]', ai_summary = ''")
+    return jsonify({
+        "message": "Candidate pipeline successfully reset to clean mock baseline.",
+        "status": "ok"
+    })
+
+
 @app.post("/api/candidates/<candidate_id>/summary")
 def generate_summary(candidate_id):
     """Generate an evidence-grounded AI fit summary using the official OpenAI API.

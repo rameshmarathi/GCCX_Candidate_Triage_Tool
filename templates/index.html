@@ -1,17 +1,17 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GCCX Candidate Triage Tool — AI-Powered Recruiter Workspace</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GCCX Candidate Triage | AI-Powered Technical Hiring</title>
+  <meta name="description" content="Intelligent candidate triage tool for GCCX technical recruiting, featuring SQLite persistence, semantic AI fit evaluation, and real-time pipeline management.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=5">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}?v=10">
 </head>
 <body>
   <div class="app-layout">
-
     <!-- TOP NAVIGATION -->
     <header class="top-nav">
       <div class="nav-brand">
@@ -40,285 +40,303 @@
             <span class="theme-switch-label" id="themeLabel">Dark Mode</span>
           </button>
         </div>
-
-        <div id="ai-status-badge" class="badge-status badge-neutral" title="AI summary service status">
-          <span class="status-dot"></span>
-          <span id="ai-status-text">Checking AI API...</span>
-        </div>
-        <button id="export-shortlist-btn" class="btn btn-secondary btn-sm" title="Export shortlisted candidates to CSV">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export CSV
+        <button id="batchTriageBtn" class="btn btn-primary" title="Evaluate all candidates with AI">
+          <span class="icon">✨</span> Auto-Triage All Candidates
+        </button>
+        <button id="exportBtn" class="btn btn-secondary" title="Export current view as CSV">
+          <span class="icon">📥</span> Export CSV
+        </button>
+        <button id="settingsBtn" class="btn btn-icon" title="AI Settings">
+          <span class="icon">⚙️</span>
+        </button>
+        <button id="resetDbBtn" class="btn btn-ghost" title="Reset DB to initial mock data">
+          <span class="icon">🔄</span> Reset
         </button>
       </div>
     </header>
 
-  <main class="page-container">
-
-    <!-- Workspace Hero Banner -->
-    <section class="hero-panel">
-      <div class="hero-content">
-        <span class="pill-highlight">ACTIVE RECRUITING PIPELINE • 48 CANDIDATES</span>
-        <h2>High-velocity candidate review & triage.</h2>
-        <p class="hero-desc">
-          Search by skills, experience, or recruiter notes. Build persistent shortlists, tag candidate nuances,
-          compare profiles side-by-side, and generate factual evidence summaries powered by OpenAI.
-        </p>
-      </div>
-
-      <div class="hero-stats">
-        <div class="stat-card">
-          <span class="stat-num" id="total-visible-count">—</span>
-          <span class="stat-label">Candidates Shown</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-num" id="shortlisted-count">—</span>
-          <span class="stat-label">Shortlisted</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Filter Control Panel -->
-    <section class="filter-panel" aria-label="Candidate Filters">
-      <div class="filter-row primary-filters">
-        <!-- Text Search -->
-        <div class="filter-field search-field">
-          <label for="search-input">Search Candidates</label>
-          <div class="input-with-icon">
-            <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input id="search-input" type="search" placeholder="Search by name, role, notes, or tech..." autocomplete="off">
-          </div>
-        </div>
-
-        <!-- Target Role -->
-        <div class="filter-field">
-          <label for="role-select">Target Role</label>
-          <select id="role-select">
-            <option value="">All Roles</option>
-          </select>
-        </div>
-
-        <!-- Experience Range -->
-        <div class="filter-field">
-          <label for="experience-select">Experience Level</label>
-          <select id="experience-select">
-            <option value="">All Experience Levels</option>
-            <option value="junior">0 – 2 years (Entry / Junior)</option>
-            <option value="mid">3 – 5 years (Mid-Level)</option>
-            <option value="senior">6+ years (Senior / Staff)</option>
-          </select>
-        </div>
-
-        <!-- Source -->
-        <div class="filter-field">
-          <label for="source-select">Source</label>
-          <select id="source-select">
-            <option value="">All Sources</option>
-          </select>
-        </div>
-
-        <!-- Status -->
-        <div class="filter-field">
-          <label for="status-select">Status</label>
-          <select id="status-select">
-            <option value="">All Candidates</option>
-            <option value="true">⭐ Shortlisted Only</option>
-            <option value="false">⏳ In Review Only</option>
-          </select>
-        </div>
-
-        <!-- Sort By -->
-        <div class="filter-field">
-          <label for="sort-select">Sort By</label>
-          <select id="sort-select">
-            <option value="default">Shortlisted First</option>
-            <option value="experience_desc">Experience: High to Low</option>
-            <option value="experience_asc">Experience: Low to High</option>
-            <option value="name_asc">Name: A to Z</option>
-            <option value="date_desc">Newest Applied</option>
-          </select>
-        </div>
-
-        <!-- Reset Button -->
-        <div class="filter-action">
-          <label>&nbsp;</label>
-          <button id="reset-filters-btn" class="btn btn-secondary" title="Reset all filters">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-            Reset
-          </button>
+    <!-- METRICS OVERVIEW BAR -->
+    <section class="metrics-bar" id="metricsBar">
+      <div class="metric-card" id="metricTotal">
+        <div class="metric-icon total-icon">👥</div>
+        <div class="metric-content">
+          <span class="metric-label">Total Candidates</span>
+          <span class="metric-value" id="valTotal">48</span>
+          <span class="metric-sub">Active pipeline</span>
         </div>
       </div>
 
-      <!-- Quick Skill Filter Chips -->
-      <div class="quick-skills-row">
-        <span class="quick-skills-label">Quick Skill Filter:</span>
-        <div class="quick-skills-chips" id="quick-skills-container">
-          <!-- Populated dynamically via JS -->
+      <div class="metric-card" id="metricShortlisted">
+        <div class="metric-icon shortlist-icon">⭐</div>
+        <div class="metric-content">
+          <span class="metric-label">Shortlisted</span>
+          <span class="metric-value text-emerald" id="valShortlist">0</span>
+          <span class="metric-sub">Top technical matches</span>
         </div>
-        <div class="skill-input-wrapper">
-          <input id="skill-input" type="text" placeholder="Filter specific skill..." autocomplete="off">
+      </div>
+
+      <div class="metric-card" id="metricScreen">
+        <div class="metric-icon screen-icon">📞</div>
+        <div class="metric-content">
+          <span class="metric-label">Phone Screen</span>
+          <span class="metric-value text-cyan" id="valScreen">0</span>
+          <span class="metric-sub">Pending technical screening</span>
+        </div>
+      </div>
+
+      <div class="metric-card" id="metricUnreviewed">
+        <div class="metric-icon pending-icon">⏳</div>
+        <div class="metric-content">
+          <span class="metric-label">Unreviewed</span>
+          <span class="metric-value text-amber" id="valUnreviewed">48</span>
+          <span class="metric-sub">Awaiting recruiter action</span>
+        </div>
+      </div>
+
+      <div class="metric-card" id="metricAI">
+        <div class="metric-icon ai-icon">🧠</div>
+        <div class="metric-content">
+          <span class="metric-label">AI Analyzed</span>
+          <span class="metric-value text-indigo" id="valAIAnalyzed">0 / 48</span>
+          <span class="metric-sub" id="valAvgScore">Avg Fit: --</span>
         </div>
       </div>
     </section>
 
-    <!-- Floating Candidate Comparison Drawer Bar -->
-    <div id="compare-bar" class="compare-bar hidden" role="region" aria-label="Comparison Toolbar">
-      <div class="compare-bar-info">
-        <span class="compare-badge" id="compare-count">0</span>
-        <span>candidates selected for side-by-side comparison</span>
-      </div>
-      <div class="compare-bar-actions">
-        <button id="open-compare-btn" class="btn btn-primary btn-sm">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg>
-          Compare Side-by-Side
-        </button>
-        <button id="clear-compare-btn" class="btn btn-secondary btn-sm">Clear</button>
-      </div>
-    </div>
+    <!-- FILTER & SEARCH CONTROLS -->
+    <section class="controls-card">
+      <div class="search-row">
+        <div class="search-input-wrapper">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search by name, role, skills (e.g. Kotlin, Docker), or notes keywords..." autocomplete="off">
+          <button id="clearSearchBtn" class="clear-btn" style="display: none;">✕</button>
+        </div>
 
-    <!-- Live Toast Message Area -->
-    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+        <div class="dropdown-group">
+          <select id="roleFilter" class="select-dropdown">
+            <option value="">All Roles (All)</option>
+          </select>
 
-    <!-- Candidate Cards Grid -->
-    <section id="candidate-list" class="candidate-grid" aria-label="Candidates list">
-      <!-- Candidate cards rendered via app.js -->
+          <select id="sourceFilter" class="select-dropdown">
+            <option value="">All Sources (All)</option>
+          </select>
+
+          <select id="expFilter" class="select-dropdown">
+            <option value="">Any Experience</option>
+            <option value="1-2">1 - 2 Years (Junior)</option>
+            <option value="3-5">3 - 5 Years (Mid)</option>
+            <option value="6-8">6 - 8+ Years (Senior)</option>
+          </select>
+
+          <select id="sortBy" class="select-dropdown">
+            <option value="ai_fit_score">Sort: Highest AI Fit Score</option>
+            <option value="applied_date">Sort: Most Recently Applied</option>
+            <option value="years_experience">Sort: Years of Experience</option>
+            <option value="name">Sort: Candidate Name (A-Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- STATUS PIPELINE TABS -->
+      <div class="pipeline-tabs">
+        <button class="tab-pill active" data-status="All">All <span class="tab-count" id="countAll">48</span></button>
+        <button class="tab-pill" data-status="Unreviewed">Unreviewed <span class="tab-count" id="countUnreviewed">48</span></button>
+        <button class="tab-pill" data-status="Shortlist">Shortlist <span class="tab-count text-emerald" id="countShortlist">0</span></button>
+        <button class="tab-pill" data-status="Phone Screen">Phone Screen <span class="tab-count text-cyan" id="countScreen">0</span></button>
+        <button class="tab-pill" data-status="Review Later">Review Later <span class="tab-count text-amber" id="countReview">0</span></button>
+        <button class="tab-pill" data-status="Reject">Reject <span class="tab-count text-rose" id="countReject">0</span></button>
+      </div>
     </section>
 
-    <!-- Empty State Container -->
-    <div id="empty-state" class="empty-state hidden">
-      <div class="empty-icon">🔍</div>
-      <h3>No candidates match your active filters</h3>
-      <p class="empty-desc">Try clearing your search term, role filter, or experience requirements.</p>
-      <button id="empty-reset-btn" class="btn btn-primary">Reset All Filters</button>
-    </div>
-
-  </main>
-
-  <!-- Candidate Detail Modal -->
-  <div id="detail-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="detail-name">
-    <div class="modal-card">
-      <header class="modal-header">
-        <div class="modal-candidate-head">
-          <div class="avatar avatar-lg" id="detail-avatar">--</div>
-          <div>
-            <div class="modal-tags-top">
-              <span class="badge-role" id="detail-role">Target Role</span>
-              <span class="badge-exp" id="detail-exp">0 yrs exp</span>
-              <span id="detail-shortlist-badge" class="badge-status">In Review</span>
-            </div>
-            <h2 id="detail-name" class="modal-title">Candidate Name</h2>
-            <div class="modal-meta-row">
-              <span id="detail-source">Source: —</span>
-              <span>•</span>
-              <span id="detail-date">Applied: —</span>
-              <span>•</span>
-              <span id="detail-id" class="text-mono">ID: —</span>
-            </div>
-          </div>
+    <!-- MAIN CANDIDATE GRID -->
+    <main class="content-area">
+      <div class="content-header">
+        <div class="results-meta">
+          Showing <span id="visibleCount" class="font-bold text-light">48</span> candidates
         </div>
-        <button id="detail-close-btn" class="modal-close" aria-label="Close modal">&times;</button>
-      </header>
-
-      <div class="modal-body">
-        <!-- Recruiter Notes Section -->
-        <div class="modal-section">
-          <h4 class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-            Original Recruiter Notes
-          </h4>
-          <div class="notes-box" id="detail-notes">Notes text...</div>
-        </div>
-
-        <!-- Skills Section -->
-        <div class="modal-section">
-          <h4 class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            Technical Skills
-          </h4>
-          <div class="skills-wrap" id="detail-skills"></div>
-        </div>
-
-        <!-- Custom Recruiter Tags Section -->
-        <div class="modal-section">
-          <h4 class="section-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-            Persistent Recruiter Tags
-          </h4>
-          <div class="tags-manager">
-            <div class="current-tags" id="detail-tags-list"></div>
-            <div class="add-tag-box">
-              <input id="detail-tag-input" type="text" placeholder="Add custom tag (e.g. Phone Screened, Salary High)..." maxlength="40">
-              <button id="detail-add-tag-btn" class="btn btn-secondary btn-sm">Add Tag</button>
-            </div>
-            <div class="suggested-tags">
-              <span class="suggest-label">Suggestions:</span>
-              <button class="chip-suggest" data-tag="Top Pick">⭐ Top Pick</button>
-              <button class="chip-suggest" data-tag="Phone Screened">📞 Phone Screened</button>
-              <button class="chip-suggest" data-tag="Strong Fit">🎯 Strong Fit</button>
-              <button class="chip-suggest" data-tag="Needs Portfolio">🎨 Needs Portfolio</button>
-              <button class="chip-suggest" data-tag="Technical Check">💻 Technical Check</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Genuine AI Evidence Fit Summary Section -->
-        <div class="modal-section ai-section">
-          <div class="ai-header">
-            <div class="ai-header-title">
-              <span class="ai-sparkle">✨</span>
-              <h4>AI Evidence Fit Summary (OpenAI gpt-4o-mini)</h4>
-            </div>
-            <button id="detail-generate-ai-btn" class="btn btn-primary btn-sm">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-              <span id="detail-ai-btn-text">Generate AI Summary</span>
-            </button>
-          </div>
-          <div class="ai-summary-box" id="detail-ai-summary">
-            <p class="ai-empty-notice">No AI summary generated yet for this candidate. Click above to generate an evidence-grounded summary from the candidate profile notes and skills.</p>
-          </div>
-          <div class="ai-disclaimer">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <span>Factual extraction grounded strictly in candidate profile evidence. Supports human review; does not make autonomous hiring decisions.</span>
-          </div>
+        <div class="view-toggles">
+          <button id="viewGridBtn" class="toggle-btn active" title="Grid View">⊞ Grid</button>
+          <button id="viewListBtn" class="toggle-btn" title="Compact List View">☰ List</button>
         </div>
       </div>
 
-      <footer class="modal-footer">
-        <button id="detail-toggle-shortlist-btn" class="btn btn-primary">
-          ⭐ Shortlist Candidate
-        </button>
-        <button id="detail-modal-close-action" class="btn btn-secondary">Close</button>
-      </footer>
+      <div id="candidateGrid" class="candidate-grid">
+        <!-- Rendered dynamically via JavaScript -->
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading candidate pipeline from SQLite...</p>
+        </div>
+      </div>
+
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-icon">🔎</div>
+        <h3>No candidates match your criteria</h3>
+        <p>Try clearing some filters or searching for different keywords.</p>
+        <button id="resetFiltersBtn" class="btn btn-secondary mt-3">Reset All Filters</button>
+      </div>
+    </main>
+
+    <!-- CANDIDATE DETAIL DRAWER (SLIDE-IN MODAL) -->
+    <aside id="candidateDrawer" class="candidate-drawer" aria-hidden="true">
+      <div class="drawer-backdrop" id="drawerBackdrop"></div>
+      <div class="drawer-content">
+        <div class="drawer-header">
+          <div class="drawer-header-info">
+            <div class="drawer-avatar" id="drawerAvatar">SR</div>
+            <div>
+              <h2 id="drawerName">Candidate Name</h2>
+              <div class="drawer-tags">
+                <span class="role-badge" id="drawerRole">Target Role</span>
+                <span class="exp-badge" id="drawerExp">5 yrs exp</span>
+                <span class="source-badge" id="drawerSource">Referral</span>
+                <span class="date-badge" id="drawerDate">Applied: 2026-09-10</span>
+              </div>
+            </div>
+          </div>
+          <button id="closeDrawerBtn" class="close-btn" title="Close Drawer">✕</button>
+        </div>
+
+        <div class="drawer-body">
+          <!-- QUICK TRIAGE BUTTONS IN DRAWER -->
+          <div class="triage-status-bar">
+            <span class="status-bar-label">Triage Decision:</span>
+            <div class="status-btn-group">
+              <button class="status-decision-btn" data-status="Shortlist">⭐ Shortlist</button>
+              <button class="status-decision-btn" data-status="Phone Screen">📞 Phone Screen</button>
+              <button class="status-decision-btn" data-status="Review Later">⏳ Review Later</button>
+              <button class="status-decision-btn" data-status="Reject">✕ Reject</button>
+            </div>
+          </div>
+
+          <!-- AI EVALUATION CARD -->
+          <div class="ai-analysis-card">
+            <div class="ai-card-header">
+              <div class="ai-header-left">
+                <span class="ai-sparkle">✨</span>
+                <div>
+                  <h3>AI Fit Evaluation & Screening Insights</h3>
+                  <p class="text-muted text-sm">Synthesized from role benchmarks, tech skills & recruiter notes</p>
+                </div>
+              </div>
+              <button id="drawerRunAIBtn" class="btn btn-accent btn-sm">
+                <span class="btn-icon">⚡</span> Re-Analyze with AI
+              </button>
+            </div>
+
+            <div class="ai-score-row" id="drawerAIScoreRow">
+              <div class="score-circle-container">
+                <div class="score-dial" id="drawerScoreDial">
+                  <span class="score-num" id="drawerScoreVal">--</span>
+                  <span class="score-max">/100</span>
+                </div>
+              </div>
+              <div class="recommendation-box">
+                <div class="rec-label">Recommendation</div>
+                <div class="rec-badge" id="drawerRecommendation">Not Evaluated</div>
+                <p class="rec-summary" id="drawerSummary">Click "Re-Analyze with AI" to generate fit score, rationale, and recommended interview questions.</p>
+              </div>
+            </div>
+
+            <!-- STRENGTHS & CONCERNS ACCORDION -->
+            <div class="insights-split" id="drawerInsightsSplit" style="display: none;">
+              <div class="insight-box strengths-box">
+                <h4><span class="icon">✅</span> Key Strengths</h4>
+                <ul id="drawerStrengthsList"></ul>
+              </div>
+              <div class="insight-box concerns-box">
+                <h4><span class="icon">⚠️</span> Areas to Probe & Potential Flags</h4>
+                <ul id="drawerConcernsList"></ul>
+              </div>
+            </div>
+
+            <!-- SUGGESTED QUESTIONS -->
+            <div class="questions-box" id="drawerQuestionsBox" style="display: none;">
+              <h4><span class="icon">💡</span> Recommended Interview Probes</h4>
+              <ul id="drawerQuestionsList"></ul>
+            </div>
+          </div>
+
+          <!-- CANDIDATE SKILLS -->
+          <div class="section-card">
+            <h3>Declared Technical Skills</h3>
+            <div class="skill-cloud" id="drawerSkillsCloud"></div>
+          </div>
+
+          <!-- RECRUITER & SOURCING NOTES -->
+          <div class="section-card">
+            <h3>Sourcing Notes & Screening Context</h3>
+            <div class="notes-display" id="drawerOriginalNotes"></div>
+          </div>
+
+          <!-- RECRUITER PRIVATE NOTES TEXTAREA -->
+          <div class="section-card">
+            <div class="flex-between">
+              <h3>Internal Recruiter Notes</h3>
+              <span id="saveStatus" class="text-xs text-muted">Auto-saves to SQLite</span>
+            </div>
+            <textarea id="drawerRecruiterNotes" placeholder="Write internal interview feedback, salary expectation, or specific next steps here..."></textarea>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- BATCH AI MODAL -->
+    <div id="batchModal" class="modal-backdrop" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Auto-Triage All Candidates</h3>
+          <button id="closeBatchModalBtn" class="close-btn">✕</button>
+        </div>
+        <div class="modal-body">
+          <p>This will evaluate all 48 candidates against their respective role requirements, scoring their technical stack alignment and screening notes for risk flags.</p>
+          <div class="batch-options mt-3">
+            <label class="checkbox-label">
+              <input type="checkbox" id="overwriteBatchCheckbox" checked>
+              <span>Re-evaluate candidates that already have AI scores</span>
+            </label>
+          </div>
+          <div id="batchProgress" class="progress-container mt-4" style="display: none;">
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" id="batchProgressFill" style="width: 0%;"></div>
+            </div>
+            <div class="progress-status" id="batchProgressText">Evaluating candidates...</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancelBatchBtn" class="btn btn-secondary">Cancel</button>
+          <button id="startBatchBtn" class="btn btn-primary">Start AI Auto-Triage</button>
+        </div>
+      </div>
     </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal-backdrop" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>AI Configuration</h3>
+          <button id="closeSettingsModalBtn" class="close-btn">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-group">
+            <label class="setting-label">OpenAI API Key (Optional)</label>
+            <input type="password" id="openaiApiKeyInput" class="text-input" placeholder="sk-...">
+            <p class="text-xs text-muted mt-1">If blank, GCCX uses the high-precision internal semantic evaluation engine with zero external API dependencies.</p>
+          </div>
+          <div class="settings-banner mt-3">
+            <div class="banner-title">⚡ Built-in Semantic Engine Enabled</div>
+            <p class="text-xs text-muted">Our built-in engine scores skill overlap, verifies seniority baseline per target role, flags risk keywords in notes (e.g. "thin on specifics", "untested breadth"), and highlights positive velocity indicators ("Series B", "strong DSA").</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="toast" style="display: none;"></div>
   </div>
 
-  <!-- Side-by-Side Candidate Comparison Modal -->
-  <div id="compare-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="compare-modal-title">
-    <div class="modal-card modal-card-wide">
-      <header class="modal-header">
-        <div>
-          <h2 id="compare-modal-title" class="modal-title">Side-by-Side Candidate Comparison</h2>
-          <p class="modal-subtitle">Evaluate matching skills, experience depth, and recruiter notes across selected candidates.</p>
-        </div>
-        <button id="compare-close-btn" class="modal-close" aria-label="Close comparison">&times;</button>
-      </header>
-
-      <div class="modal-body comparison-table-container" id="comparison-table-wrap">
-        <!-- Rendered dynamically via app.js -->
-      </div>
-
-      <footer class="modal-footer">
-        <button id="compare-modal-close-action" class="btn btn-secondary">Close Comparison</button>
-      </footer>
-    </div>
-  </div>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <span>GCCX AI Full-Stack Engineer Intern Assessment • Built with Flask, SQLite, and OpenAI API</span>
-      <span class="footer-note">Synthetic candidate dataset (48 records). Real LLM integration.</span>
-    </div>
-  </footer>
-
-  <script src="{{ url_for('static', filename='app.js') }}?v=2"></script>
+  <script src="{{ url_for('static', filename='app.js') }}?v=10"></script>
 </body>
 </html>
