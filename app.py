@@ -17,6 +17,8 @@ DB_PATH = Path(os.getenv("DATABASE_PATH", BASE_DIR / "candidates.db"))
 DATA_PATH = BASE_DIR / "candidates.json"
 
 app = Flask(__name__)
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
 
 
 @contextmanager
