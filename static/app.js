@@ -966,6 +966,37 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ==========================================================================
+// Dark / Light Theme Toggle System
+// ==========================================================================
+
+const themeToggleBtn = document.getElementById('theme-toggle-btn');
+const themeIcon = document.getElementById('theme-icon');
+const themeToggleText = document.getElementById('theme-toggle-text');
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('gccx_theme', theme);
+  if (themeToggleBtn) {
+    themeToggleBtn.setAttribute('aria-checked', theme === 'dark' ? 'true' : 'false');
+  }
+  if (themeToggleText) {
+    themeToggleText.textContent = theme === 'dark' ? 'Dark Mode' : 'Light Mode';
+  }
+}
+
+// Initialize theme from localStorage or system preference
+const savedTheme = localStorage.getItem('gccx_theme') || 
+  (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+applyTheme(savedTheme);
+
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+}
+
+// ==========================================================================
 // Initialization
 // ==========================================================================
 

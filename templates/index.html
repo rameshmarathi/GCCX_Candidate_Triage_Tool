@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2">
 </head>
 <body>
 
@@ -23,6 +23,18 @@
       </div>
 
       <div class="topbar-actions">
+        <!-- Prominent Sliding Theme Switch Pill -->
+        <div class="theme-switch-wrapper" id="themeSwitchWrapper" title="Toggle between Dark and Light mode">
+          <button id="theme-toggle-btn" class="theme-switch-pill" role="switch" aria-checked="false" aria-label="Toggle Dark and Light mode">
+            <span class="theme-switch-track">
+              <span class="track-icon track-icon-moon" title="Dark">🌙</span>
+              <span class="track-knob"></span>
+              <span class="track-icon track-icon-sun" title="Light">☀️</span>
+            </span>
+            <span id="theme-toggle-text" class="theme-toggle-label">Dark Mode</span>
+          </button>
+        </div>
+
         <div id="ai-status-badge" class="badge-status badge-neutral" title="AI summary service status">
           <span class="status-dot"></span>
           <span id="ai-status-text">Checking AI API...</span>
@@ -302,6 +314,6 @@
     </div>
   </footer>
 
-  <script src="{{ url_for('static', filename='app.js') }}"></script>
+  <script src="{{ url_for('static', filename='app.js') }}?v=2"></script>
 </body>
 </html>
