@@ -6,32 +6,38 @@
   <title>GCCX Candidate Triage Tool — AI-Powered Recruiter Workspace</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=5">
 </head>
 <body>
+  <div class="app-layout">
 
-  <!-- Top Navigation & Brand Bar -->
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <div class="brand-logo">G<span>CC</span>X</div>
-        <div class="brand-text">
-          <div class="brand-eyebrow">TALENT TRIAGE WORKSPACE</div>
-          <h1 class="brand-title">Candidate Triage Tool</h1>
+    <!-- TOP NAVIGATION -->
+    <header class="top-nav">
+      <div class="nav-brand">
+        <div class="brand-logo">
+          <div class="logo-mark">⚡</div>
+          <div class="brand-text">
+            <span class="brand-title">GCCX <span class="highlight">Triage AI</span></span>
+            <span class="brand-subtitle">Technical Candidate Evaluation & Pipeline</span>
+          </div>
+        </div>
+        <div class="live-pill">
+          <span class="pulse-dot"></span>
+          <span>SQLite Engine Connected</span>
         </div>
       </div>
 
-      <div class="topbar-actions">
-        <!-- Prominent Sliding Theme Switch Pill -->
-        <div class="theme-switch-wrapper" id="themeSwitchWrapper" title="Toggle between Dark and Light mode">
-          <button id="theme-toggle-btn" class="theme-switch-pill" role="switch" aria-checked="false" aria-label="Toggle Dark and Light mode">
+      <div class="nav-actions">
+        <!-- PROMINENT THEME SWITCH -->
+        <div class="theme-switch-container" id="themeSwitchWrapper" title="Click to switch between Dark & Light Mode">
+          <button id="themeToggleBtn" class="theme-switch-pill" role="switch" aria-checked="false" aria-label="Toggle Dark and Light mode">
             <span class="theme-switch-track">
-              <span class="track-icon track-icon-moon" title="Dark">🌙</span>
-              <span class="track-knob"></span>
-              <span class="track-icon track-icon-sun" title="Light">☀️</span>
+              <span class="theme-switch-icon moon-icon">🌙</span>
+              <span class="theme-switch-icon sun-icon">☀️</span>
+              <span class="theme-switch-thumb" id="themeThumb"></span>
             </span>
-            <span id="theme-toggle-text" class="theme-toggle-label">Dark Mode</span>
+            <span class="theme-switch-label" id="themeLabel">Dark Mode</span>
           </button>
         </div>
 
@@ -41,11 +47,10 @@
         </div>
         <button id="export-shortlist-btn" class="btn btn-secondary btn-sm" title="Export shortlisted candidates to CSV">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export Shortlist
+          Export CSV
         </button>
       </div>
-    </div>
-  </header>
+    </header>
 
   <main class="page-container">
 

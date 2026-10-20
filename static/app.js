@@ -969,9 +969,8 @@ document.addEventListener('keydown', (e) => {
 // Dark / Light Theme Toggle System
 // ==========================================================================
 
-const themeToggleBtn = document.getElementById('theme-toggle-btn');
-const themeIcon = document.getElementById('theme-icon');
-const themeToggleText = document.getElementById('theme-toggle-text');
+const themeToggleBtn = document.getElementById('themeToggleBtn') || document.getElementById('theme-toggle-btn');
+const themeLabel = document.getElementById('themeLabel') || document.getElementById('theme-toggle-text');
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -979,19 +978,18 @@ function applyTheme(theme) {
   if (themeToggleBtn) {
     themeToggleBtn.setAttribute('aria-checked', theme === 'dark' ? 'true' : 'false');
   }
-  if (themeToggleText) {
-    themeToggleText.textContent = theme === 'dark' ? 'Dark Mode' : 'Light Mode';
+  if (themeLabel) {
+    themeLabel.textContent = theme === 'dark' ? 'Dark Mode' : 'Light Mode';
   }
 }
 
-// Initialize theme from localStorage or system preference
-const savedTheme = localStorage.getItem('gccx_theme') || 
-  (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+// Default to dark mode (favorite aesthetic) or user preference
+const savedTheme = localStorage.getItem('gccx_theme') || 'dark';
 applyTheme(savedTheme);
 
 if (themeToggleBtn) {
   themeToggleBtn.addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
     applyTheme(current === 'dark' ? 'light' : 'dark');
   });
 }
