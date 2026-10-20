@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.db
+.pytest_cache/
+.DS_Store
+.clario/
+.cursor/
+.agents/
+.mcp.json
+.windsurfrules
+AGENT.md
+CLAUDE.md
+verify_data.py
+projects/
