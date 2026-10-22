@@ -108,7 +108,9 @@ Open your browser and navigate to:
 👉 **http://127.0.0.1:5000**
 
 ---
-
+SnapSot:
+Screenshot/Webpage.png
+---
 ## Running the Automated Test Suite
 
 We maintain a 100% passing test suite with 27 unit and integration tests covering the REST API, SQLite persistence, search/filter queries, error handling, Task 2a ranking at scale, and all Task 2b edge cases.
