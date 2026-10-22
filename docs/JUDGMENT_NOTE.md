@@ -1,8 +1,5 @@
 # Judgment Note — Scaling Triage to 3,000 Candidates / Week
 
-**Context:** The recruiter loves the prototype. Leadership wants to roll it out to a client processing 3,000 candidates/week, providing **one additional engineer** and a **two-week sprint**.
-
----
 
 ### 1. What We Would Build First (Week 1–2)
 At 3,000 candidates/week (12,000/month), the priority is pipeline reliability, concurrency, and data security:
