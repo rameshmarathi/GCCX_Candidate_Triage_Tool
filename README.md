@@ -108,8 +108,8 @@ Open your browser and navigate to:
 👉 **http://127.0.0.1:5000**
 
 ---
-SnapSot:
-Screenshot/Webpage.png
+### Application Screenshot:
+![Candidate Triage Tool Screenshot](./Screenshot/Webpage.png)
 ---
 ## Running the Automated Test Suite
 
