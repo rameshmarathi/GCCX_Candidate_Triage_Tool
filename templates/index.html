@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}?v=10">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}?v=11">
 </head>
 <body>
   <div class="app-layout">
@@ -40,6 +40,9 @@
             <span class="theme-switch-label" id="themeLabel">Dark Mode</span>
           </button>
         </div>
+        <button id="navCompareBtn" class="btn btn-accent" title="Compare selected candidates" style="display: none;">
+          <span class="icon">⚖️</span> Compare (<span id="navCompareCount">0</span>)
+        </button>
         <button id="batchTriageBtn" class="btn btn-primary" title="Evaluate all candidates with AI">
           <span class="icon">✨</span> Auto-Triage All Candidates
         </button>
@@ -155,6 +158,9 @@
           Showing <span id="visibleCount" class="font-bold text-light">48</span> candidates
         </div>
         <div class="view-toggles">
+          <button id="headerCompareBtn" class="toggle-btn" title="Compare selected candidates side-by-side" style="display: none;">
+            <span class="icon">⚖️</span> Compare (<span id="headerCompareCount">0</span>)
+          </button>
           <button id="viewGridBtn" class="toggle-btn active" title="Grid View">⊞ Grid</button>
           <button id="viewListBtn" class="toggle-btn" title="Compact List View">☰ List</button>
         </div>
@@ -333,10 +339,45 @@
       </div>
     </div>
 
+    <!-- FLOATING COMPARE BAR -->
+    <div id="compareBar" class="compare-bar" style="display: none;" role="region" aria-label="Candidate Comparison Toolbar">
+      <div class="compare-bar-info">
+        <span class="compare-badge" id="compareCount">0</span>
+        <span class="compare-bar-text"><strong id="compareCountLabel">0</strong> candidates selected for comparison</span>
+      </div>
+      <div class="compare-bar-actions">
+        <button id="openCompareBtn" class="btn btn-primary btn-sm">
+          <span class="icon">⚖️</span> Compare Side-by-Side
+        </button>
+        <button id="clearCompareBtn" class="btn btn-secondary btn-sm">Clear Selection</button>
+      </div>
+    </div>
+
+    <!-- SIDE-BY-SIDE CANDIDATE COMPARISON MODAL -->
+    <div id="compareModal" class="modal-backdrop" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="compareModalTitle">
+      <div class="modal-card modal-card-wide">
+        <div class="modal-header">
+          <div>
+            <h3 id="compareModalTitle" class="flex items-center gap-2">
+              <span class="icon">⚖️</span> Side-by-Side Candidate Comparison
+            </h3>
+            <p class="text-xs text-muted mt-1">Cross-evaluate technical skill overlap, seniority, AI fit scores, and recruiter notes.</p>
+          </div>
+          <button id="closeCompareModalBtn" class="close-btn" aria-label="Close comparison">✕</button>
+        </div>
+        <div class="modal-body comparison-table-container" id="comparisonTableWrap">
+          <!-- Rendered dynamically via app.js -->
+        </div>
+        <div class="modal-footer">
+          <button id="closeCompareModalFooterBtn" class="btn btn-secondary">Close Comparison</button>
+        </div>
+      </div>
+    </div>
+
     <!-- NOTIFICATION TOAST -->
     <div id="toast" class="toast" style="display: none;"></div>
   </div>
 
-  <script src="{{ url_for('static', filename='app.js') }}?v=10"></script>
+  <script src="{{ url_for('static', filename='app.js') }}?v=11"></script>
 </body>
 </html>

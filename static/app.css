@@ -1770,3 +1770,238 @@ textarea#drawerRecruiterNotes:focus {
   border-top-color: rgba(0, 0, 0, 0.06);
 }
 
+/* ==========================================================================
+   FLOATING CANDIDATE COMPARE BAR
+   ========================================================================== */
+.compare-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.94);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: var(--radius-full);
+  padding: 10px 22px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(56, 189, 248, 0.25);
+  z-index: 1500;
+  backdrop-filter: blur(18px);
+  animation: slideUpCompare 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpCompare {
+  from { opacity: 0; transform: translate(-50%, 24px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.compare-bar-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.compare-badge {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo));
+  color: #ffffff;
+  font-size: 0.775rem;
+  font-weight: 800;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.45);
+}
+
+.compare-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Checkbox on Cards & List */
+.compare-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.18s ease;
+}
+
+.compare-checkbox-label:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: var(--accent-cyan);
+}
+
+.compare-checkbox-label input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent-cyan);
+  cursor: pointer;
+  margin: 0;
+}
+
+.candidate-card.is-compared {
+  border-color: rgba(56, 189, 248, 0.7) !important;
+  box-shadow: 0 0 22px rgba(56, 189, 248, 0.28) !important;
+}
+
+/* ==========================================================================
+   SIDE-BY-SIDE COMPARISON MODAL & TABLE
+   ========================================================================== */
+.modal-card-wide {
+  max-width: 1200px;
+  width: 95%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.comparison-table-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 0;
+  max-height: calc(90vh - 140px);
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.compare-table th, .compare-table td {
+  padding: 14px 18px;
+  border: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+.compare-table th.attr-col {
+  background: #111827;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  width: 190px;
+  min-width: 170px;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.compare-candidate-col {
+  min-width: 280px;
+  max-width: 380px;
+}
+
+.compare-cand-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.compare-cand-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.compare-cand-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+.compare-shared-box {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compare-shared-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #34d399;
+  letter-spacing: 0.5px;
+}
+
+.skill-pill.shared-skill {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.45);
+  color: #34d399;
+  font-weight: 600;
+}
+
+.skill-pill.unique-skill {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #7dd3fc;
+}
+
+.compare-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .compare-bar {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(2, 132, 199, 0.35);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.12), 0 0 16px rgba(2, 132, 199, 0.15);
+  color: #0f172a;
+}
+
+[data-theme="light"] .compare-table th.attr-col {
+  background: #f8fafc;
+  color: #475569;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .compare-checkbox-label {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+[data-theme="light"] .compare-checkbox-label:hover {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+[data-theme="light"] .candidate-card.is-compared {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 18px rgba(2, 132, 199, 0.25) !important;
+}
+
+[data-theme="light"] .compare-shared-box {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+

@@ -22,6 +22,7 @@ const state = {
   viewMode: 'grid',
   activeCandidate: null,
   aiScores: {}, // candidateId -> { score, recommendation, summary, strengths, concerns, questions }
+  selectedForComparison: new Set(),
   saveNotesTimeout: null,
   searchDebounceTimeout: null,
 };
@@ -169,6 +170,20 @@ function initDom() {
 
   // Toast
   dom.toast = document.getElementById('toast');
+
+  // Candidate Comparison Elements
+  dom.compareBar = document.getElementById('compareBar');
+  dom.compareCount = document.getElementById('compareCount');
+  dom.openCompareBtn = document.getElementById('openCompareBtn');
+  dom.clearCompareBtn = document.getElementById('clearCompareBtn');
+  dom.navCompareBtn = document.getElementById('navCompareBtn');
+  dom.navCompareCount = document.getElementById('navCompareCount');
+  dom.headerCompareBtn = document.getElementById('headerCompareBtn');
+  dom.headerCompareCount = document.getElementById('headerCompareCount');
+  dom.compareModal = document.getElementById('compareModal');
+  dom.closeCompareModalBtn = document.getElementById('closeCompareModalBtn');
+  dom.closeCompareModalFooterBtn = document.getElementById('closeCompareModalFooterBtn');
+  dom.comparisonTableWrap = document.getElementById('comparisonTableWrap');
 }
 
 // ============================================================================
@@ -629,8 +644,10 @@ function renderCandidates() {
 
     const summaryText = c.ai_summary || ai.summary || 'Click AI Triage to generate fit analysis.';
 
+    const isCompared = state.selectedForComparison.has(c.id);
+
     return `
-      <div class="candidate-card" data-id="${c.id}" data-status="${status}">
+      <div class="candidate-card ${isCompared ? 'is-compared' : ''}" data-id="${c.id}" data-status="${status}">
         <div class="card-header">
           <div class="candidate-identity">
             <div class="avatar">${getInitials(c.name)}</div>
@@ -665,6 +682,10 @@ function renderCandidates() {
         </div>
 
         <div class="card-actions">
+          <label class="compare-checkbox-label" title="Select to compare side-by-side (max 3)">
+            <input type="checkbox" class="compare-checkbox" data-id="${c.id}" ${isCompared ? 'checked' : ''}>
+            <span>Compare</span>
+          </label>
           <button class="action-btn shortlist-card-btn ${c.shortlisted ? 'active' : ''}" data-id="${c.id}" title="${c.shortlisted ? 'Remove from Shortlist' : 'Add to Shortlist'}">
             ${c.shortlisted ? '⭐ Shortlisted' : '☆ Shortlist'}
           </button>
@@ -684,12 +705,30 @@ function renderCandidates() {
 }
 
 function attachCardEvents() {
-  // Card click opens drawer (unless clicked on button)
+  // Card click opens drawer (unless clicked on button or compare checkbox)
   dom.candidateGrid.querySelectorAll('.candidate-card').forEach(card => {
     card.addEventListener('click', (e) => {
-      if (e.target.closest('.action-btn')) return;
+      if (e.target.closest('.action-btn') || e.target.closest('.compare-checkbox-label') || e.target.closest('.compare-checkbox')) return;
       const cid = card.getAttribute('data-id');
       openCandidateDrawer(cid);
+    });
+  });
+
+  // Compare Checkbox on Card
+  dom.candidateGrid.querySelectorAll('.compare-checkbox').forEach(input => {
+    input.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+    input.addEventListener('change', (e) => {
+      e.stopPropagation();
+      const cid = input.getAttribute('data-id');
+      toggleCandidateCompare(cid, input.checked);
+    });
+  });
+
+  dom.candidateGrid.querySelectorAll('.compare-checkbox-label').forEach(label => {
+    label.addEventListener('click', (e) => {
+      e.stopPropagation();
     });
   });
 
@@ -722,6 +761,281 @@ function attachCardEvents() {
       await runAICandidateAnalysis(cid);
     });
   });
+}
+
+// ============================================================================
+// Candidate Comparison Feature
+// ============================================================================
+
+function toggleCandidateCompare(candidateId, forceState = null) {
+  const isSelected = state.selectedForComparison.has(candidateId);
+  const targetState = forceState !== null ? forceState : !isSelected;
+
+  if (targetState) {
+    if (state.selectedForComparison.size >= 3) {
+      showToast('You can compare a maximum of 3 candidates simultaneously.', 'info');
+      updateCompareBar();
+      renderCandidates();
+      return;
+    }
+    state.selectedForComparison.add(candidateId);
+  } else {
+    state.selectedForComparison.delete(candidateId);
+  }
+
+  updateCompareBar();
+  renderCandidates();
+}
+
+function updateCompareBar() {
+  const count = state.selectedForComparison.size;
+  if (dom.compareCount) dom.compareCount.textContent = count;
+  const labelEl = document.getElementById('compareCountLabel');
+  if (labelEl) labelEl.textContent = count;
+  if (dom.navCompareCount) dom.navCompareCount.textContent = count;
+  if (dom.headerCompareCount) dom.headerCompareCount.textContent = count;
+
+  if (count > 0) {
+    if (dom.compareBar) dom.compareBar.style.display = 'flex';
+    if (dom.navCompareBtn) dom.navCompareBtn.style.display = 'inline-flex';
+    if (dom.headerCompareBtn) dom.headerCompareBtn.style.display = 'inline-flex';
+  } else {
+    if (dom.compareBar) dom.compareBar.style.display = 'none';
+    if (dom.navCompareBtn) dom.navCompareBtn.style.display = 'none';
+    if (dom.headerCompareBtn) dom.headerCompareBtn.style.display = 'none';
+  }
+}
+
+function openComparisonModal() {
+  const ids = Array.from(state.selectedForComparison);
+  const selectedCandidates = state.candidates.filter(c => ids.includes(c.id));
+
+  if (selectedCandidates.length < 2) {
+    showToast('Select at least 2 candidates using the "Compare" checkboxes to view the side-by-side matrix.', 'info');
+    return;
+  }
+
+  // Calculate shared skills across all selected profiles
+  const allSkillSets = selectedCandidates.map(c => new Set((c.skills || []).map(s => s.toLowerCase())));
+  const sharedSkills = (selectedCandidates[0].skills || []).filter(s =>
+    allSkillSets.every(set => set.has(s.toLowerCase()))
+  );
+  const sharedSkillLower = new Set(sharedSkills.map(s => s.toLowerCase()));
+
+  let html = `
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th class="attr-col">Candidate</th>
+          ${selectedCandidates.map(c => {
+            const status = getCandidateStatus(c);
+            const ai = state.aiScores[c.id] || evaluateCandidateAI(c);
+            let scoreClass = 'low';
+            if (ai.score >= 80) scoreClass = 'high';
+            else if (ai.score >= 65) scoreClass = 'medium';
+
+            let statusBadgeClass = 'unreviewed';
+            if (status === 'Shortlist') statusBadgeClass = 'shortlist';
+            else if (status === 'Phone Screen') statusBadgeClass = 'phonescreen';
+            else if (status === 'Review Later') statusBadgeClass = 'reviewlater';
+            else if (status === 'Reject') statusBadgeClass = 'reject';
+
+            return `
+              <th class="compare-candidate-col">
+                <div class="compare-cand-header">
+                  <div class="compare-cand-top">
+                    <div class="avatar">${getInitials(c.name)}</div>
+                    <div class="score-badge ${scoreClass}" title="AI Fit Score">
+                      <span class="score-val">${ai.score}</span>
+                      <span class="score-lbl">FIT</span>
+                    </div>
+                  </div>
+                  <div class="compare-cand-name">${escapeHtml(c.name)}</div>
+                  <div class="badges-row">
+                    <span class="role-badge">${escapeHtml(c.target_role)}</span>
+                    <span class="status-badge ${statusBadgeClass}">${status}</span>
+                  </div>
+                  <div class="compare-actions-row">
+                    <button class="action-btn compare-shortlist-btn ${c.shortlisted ? 'shortlist-btn' : ''}" data-id="${c.id}">
+                      ${c.shortlisted ? '⭐ Shortlisted' : '☆ Shortlist'}
+                    </button>
+                    <button class="action-btn compare-drawer-btn" data-id="${c.id}">
+                      Review Profile
+                    </button>
+                  </div>
+                </div>
+              </th>
+            `;
+          }).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        <!-- SHARED SKILLS BANNER -->
+        <tr>
+          <th class="attr-col">Shared Skills</th>
+          <td colspan="${selectedCandidates.length}">
+            <div class="compare-shared-box">
+              <span class="compare-shared-label">Common Technical Overlap (${sharedSkills.length} matching)</span>
+              <div class="skills-container">
+                ${sharedSkills.length > 0 
+                  ? sharedSkills.map(s => `<span class="skill-pill shared-skill">✓ ${escapeHtml(s)}</span>`).join('') 
+                  : '<span class="text-xs text-muted">No common technical skills shared across all selected candidates.</span>'}
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- EXPERIENCE & SENIORITY -->
+        <tr>
+          <th class="attr-col">Experience & Seniority</th>
+          ${selectedCandidates.map(c => {
+            const bench = ROLE_BENCHMARKS[c.target_role] || { minExp: 3 };
+            const meets = c.years_experience >= bench.minExp;
+            return `
+              <td>
+                <div class="font-bold text-light">${c.years_experience} Years</div>
+                <div class="text-xs ${meets ? 'text-emerald' : 'text-amber'} mt-1">
+                  ${meets ? `✓ Meets ${c.target_role} benchmark (${bench.minExp}+ yrs)` : `⚠️ Under benchmark (${bench.minExp} yrs expected)`}
+                </div>
+              </td>
+            `;
+          }).join('')}
+        </tr>
+
+        <!-- SOURCING & DATE -->
+        <tr>
+          <th class="attr-col">Source & Applied Date</th>
+          ${selectedCandidates.map(c => `
+            <td>
+              <div class="font-bold text-light">${escapeHtml(c.source || 'Direct')}</div>
+              <div class="text-xs text-muted mt-1">Applied: ${escapeHtml(c.applied_date)}</div>
+            </td>
+          `).join('')}
+        </tr>
+
+        <!-- ALL DECLARED SKILLS -->
+        <tr>
+          <th class="attr-col">Declared Stack Breakdown</th>
+          ${selectedCandidates.map(c => `
+            <td>
+              <div class="skills-container">
+                ${(c.skills || []).map(s => {
+                  const isShared = sharedSkillLower.has(s.toLowerCase());
+                  return `<span class="skill-pill ${isShared ? 'shared-skill' : 'unique-skill'}">${escapeHtml(s)}</span>`;
+                }).join('')}
+              </div>
+            </td>
+          `).join('')}
+        </tr>
+
+        <!-- AI FIT RECOMMENDATION -->
+        <tr>
+          <th class="attr-col">AI Recommendation</th>
+          ${selectedCandidates.map(c => {
+            const ai = state.aiScores[c.id] || evaluateCandidateAI(c);
+            return `
+              <td>
+                <div class="font-bold text-light" style="color: ${ai.score >= 80 ? '#34d399' : ai.score >= 65 ? '#38bdf8' : '#fbbf24'};">
+                  ${ai.recommendation} (${ai.score}/100)
+                </div>
+                <p class="text-xs text-muted mt-1 leading-relaxed">${escapeHtml(ai.summary)}</p>
+              </td>
+            `;
+          }).join('')}
+        </tr>
+
+        <!-- KEY STRENGTHS -->
+        <tr>
+          <th class="attr-col">Key Strengths</th>
+          ${selectedCandidates.map(c => {
+            const ai = state.aiScores[c.id] || evaluateCandidateAI(c);
+            return `
+              <td>
+                <ul class="text-xs text-secondary pl-3" style="list-style: disc; line-height: 1.5;">
+                  ${(ai.strengths || []).map(st => `<li>${escapeHtml(st)}</li>`).join('')}
+                </ul>
+              </td>
+            `;
+          }).join('')}
+        </tr>
+
+        <!-- AREAS TO PROBE -->
+        <tr>
+          <th class="attr-col">Areas to Probe</th>
+          ${selectedCandidates.map(c => {
+            const ai = state.aiScores[c.id] || evaluateCandidateAI(c);
+            return `
+              <td>
+                <ul class="text-xs text-muted pl-3" style="list-style: disc; line-height: 1.5;">
+                  ${(ai.concerns || []).map(cn => `<li>${escapeHtml(cn)}</li>`).join('')}
+                </ul>
+              </td>
+            `;
+          }).join('')}
+        </tr>
+
+        <!-- RECRUITER & SOURCING NOTES -->
+        <tr>
+          <th class="attr-col">Recruiter & Screening Notes</th>
+          ${selectedCandidates.map(c => `
+            <td>
+              <div class="notes-display text-xs" style="max-height: 140px; overflow-y: auto;">
+                ${escapeHtml(c.notes || 'No screening notes on file.')}
+              </div>
+              ${c.recruiter_notes ? `<div class="mt-2 text-xs text-cyan"><strong>Private Notes:</strong> ${escapeHtml(c.recruiter_notes)}</div>` : ''}
+            </td>
+          `).join('')}
+        </tr>
+
+        <!-- SUGGESTED QUESTIONS -->
+        <tr>
+          <th class="attr-col">Targeted Interview Questions</th>
+          ${selectedCandidates.map(c => {
+            const ai = state.aiScores[c.id] || evaluateCandidateAI(c);
+            return `
+              <td>
+                <ol class="text-xs text-secondary pl-4" style="list-style: decimal; line-height: 1.5;">
+                  ${(ai.questions || []).slice(0, 2).map(q => `<li>${escapeHtml(q)}</li>`).join('')}
+                </ol>
+              </td>
+            `;
+          }).join('')}
+        </tr>
+      </tbody>
+    </table>
+  `;
+
+  dom.comparisonTableWrap.innerHTML = html;
+
+  // Attach buttons inside comparison modal
+  dom.comparisonTableWrap.querySelectorAll('.compare-shortlist-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const cid = btn.getAttribute('data-id');
+      const c = state.candidates.find(item => item.id === cid);
+      if (!c) return;
+      const newStatus = c.shortlisted ? 'Unreviewed' : 'Shortlist';
+      await setCandidateStatus(cid, newStatus);
+      openComparisonModal(); // Refresh modal
+    });
+  });
+
+  dom.comparisonTableWrap.querySelectorAll('.compare-drawer-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const cid = btn.getAttribute('data-id');
+      closeComparisonModal();
+      openCandidateDrawer(cid);
+    });
+  });
+
+  dom.compareModal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeComparisonModal() {
+  if (dom.compareModal) dom.compareModal.style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 // ============================================================================
@@ -1168,9 +1482,30 @@ function setupEventListeners() {
     if (e.key === 'Escape') {
       closeCandidateDrawer();
       closeBatchModal();
+      closeComparisonModal();
       if (dom.settingsModal) dom.settingsModal.style.display = 'none';
     }
   });
+
+  // Comparison Triggers & Actions
+  if (dom.openCompareBtn) dom.openCompareBtn.addEventListener('click', openComparisonModal);
+  if (dom.navCompareBtn) dom.navCompareBtn.addEventListener('click', openComparisonModal);
+  if (dom.headerCompareBtn) dom.headerCompareBtn.addEventListener('click', openComparisonModal);
+  if (dom.closeCompareModalBtn) dom.closeCompareModalBtn.addEventListener('click', closeComparisonModal);
+  if (dom.closeCompareModalFooterBtn) dom.closeCompareModalFooterBtn.addEventListener('click', closeComparisonModal);
+  if (dom.compareModal) {
+    dom.compareModal.addEventListener('click', (e) => {
+      if (e.target === dom.compareModal) closeComparisonModal();
+    });
+  }
+  if (dom.clearCompareBtn) {
+    dom.clearCompareBtn.addEventListener('click', () => {
+      state.selectedForComparison.clear();
+      updateCompareBar();
+      renderCandidates();
+      showToast('Comparison selection cleared', 'info');
+    });
+  }
 
   // Drawer Decision Buttons
   if (dom.statusDecisionBtns) {
